@@ -1,0 +1,86 @@
+<?php
+/**
+ * @file
+ * Implementation of common hooks.
+ */
+
+// Api url.
+define('SLACK_API_URL', 'https://slack.com/api/');
+// Ok response code.
+define('SLACK_API_HTTP_OK', 200);
+// Ok response code.
+define('SLACK_API_MESSAGES_COUNT', 10);
+
+/**
+ * Implements hook_menu().
+ */
+function slack_integration_menu() {
+  $menu['admin/config/slack_integration'] = array(
+    'title' => t('Slack integration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('slack_integration_config_form'),
+    'access arguments' => array('access administration pages'),
+    'file' => 'slack_integration.admin.php',
+  );
+
+  return $menu;
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function slack_integration_block_info() {
+  $blocks['recent_messages'] = array(
+    'info' => t('Slack latest 10 messages'),
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function slack_integration_theme() {
+  return array(
+    'slack_integration_block' => array(
+      'template' => 'slack-integration-block',
+      'variables' => array(
+        'messages' => NULL,
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_block_view().
+ *
+ * @var string $delta
+ * @return array
+ */
+function slack_integration_block_view($delta = '') {
+  $block = array();
+
+  switch ($delta) {
+    case 'recent_messages':
+        module_load_include('inc', 'slack_integration', 'slack_integration');
+        $block['title'] = 'Slack messages';
+        $block['content'] = slack_integration_block_content();
+      break;
+  }
+  return $block;
+}
+
+/**
+ * Implements hook_slack_integration_messages_alter().
+ *
+ * @var array $messages
+ */
+function slack_integration_slack_integration_messages_alter(&$messages) {
+  foreach ($messages as &$message) {
+    $dateTime = DateTime::createFromFormat('U.u', $message['ts']);
+    $message = array(
+      'text' => $message['text'],
+      'time' => format_date($dateTime->getTimestamp(), 'short'),
+    );
+  }
+}

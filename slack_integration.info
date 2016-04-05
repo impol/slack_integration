@@ -1,0 +1,3 @@
+name = Slack Integration
+description = Displays latest messages from Slack channel
+core = 7.x
